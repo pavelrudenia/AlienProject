@@ -20,14 +20,14 @@ class Ship():
         self.moving_left = False
 
         """сохранение вещественной координаты корабля"""
-        self.x =float(self.recct.x)
+        self.x =float(self.rect.x)
 
     def update(self):
-        """обновляем позицию корабля в зависимости от флага"""
-        if self.moving_right:
-
+        """Обновляет позицию корабля с учетом флагов."""
+        # Обновляется атрибут x объекта ship, не rect.
+        if self.moving_right and self.rect.right < self.screen_rect.right:
             self.x += self.settings.ship_speed
-        if self.moving_left:
+        if self.moving_left and self.rect.left >0:
             self.x -= self.settings.ship_speed
         self.rect.x = self.x
     def blitme(self):
