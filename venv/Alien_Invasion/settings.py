@@ -13,4 +13,4 @@ class Settings():
         self.bullet_height = 15
         self.bullet_color = (255, 25, 25)
         #количество пуль
-        self.bullets_allowed = 7
+        self.bullets_allowed = 15
