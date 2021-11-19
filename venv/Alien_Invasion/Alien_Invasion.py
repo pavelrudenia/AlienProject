@@ -15,10 +15,10 @@ class AlienInvasion:
         # Инициализирует игру и создает игровые ресурсы.
         pygame.init()
         pygame.display.set_caption("Вторжение пришельцев")
-        """ДЛЯ ПОЛНОЭКРАННОГО РЕЖИМА 
-              self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-               self.settings.screen_width = self.screen.get_rect().width
-               self.settings.screen_height = self.screen.get_rect().height"""
+        #ДЛЯ ПОЛНОЭКРАННОГО РЕЖИМА
+        # self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        # self.settings.screen_width = self.screen.get_rect().width
+        # self.settings.screen_height = self.screen.get_rect().height
         self.ship = Ship(self)
         self.bullets = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
@@ -31,9 +31,10 @@ class AlienInvasion:
             # при каждом проходе цикла перериcовывается экран
             self._update_screen()
             self.ship.update()
+            self._update_aliens()
             self._update_bullets()
 
-            print(f"Число пуль на экране {len(self.bullets)}")
+            #print(f"Число пуль на экране {len(self.bullets)}")
     def _check_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -51,6 +52,8 @@ class AlienInvasion:
         elif event.key == pygame.K_LEFT:
             self.ship.moving_left = True
         elif event.key == pygame.K_q:
+            sys.exit()
+        elif event.key == pygame.K_ESCAPE:
             sys.exit()
         elif event.key == pygame.K_SPACE:
             self._fire_bullet()
@@ -92,21 +95,66 @@ class AlienInvasion:
             if bullet.rect.bottom <= 0:
                 self.bullets.remove(bullet)
 
+        # Проверка попаданий в пришельцев.
+        # При обнаружении попадания удалить снаряд и пришельца.
+        collisions = pygame.sprite.groupcollide(self.bullets, self.aliens, True, True)
+
+        if not self.aliens:
+            # Уничтожение существующих снарядов и создание нового флота.
+            self.bullets.empty()
+            self._create_fleet()
+
+    def _update_aliens(self):
+        """Обновляет позиции всех пришельцев во флоте."""
+
+        self._check_fleet_edges()
+        self.aliens.update()
+
     def _create_fleet(self):
         """Создает флот пришельцев."""
         # Создание пришельца и вычисление количества пришельцев в ряду
         # Интервал между соседними пришельцами равен ширине пришельца.
         alien = Alien(self)
+        alien_width, alien_height = alien.rect.size
         alien_width = alien.rect.width
         available_space_x = self.settings.screen_width - (1 * alien_width)
         number_aliens_x = available_space_x // (2 * alien_width)
-        # Создание первого ряда пришельцев.
-        for alien_number in range(number_aliens_x):
-            # Создание пришельца и размещение его в ряду.
-            alien = Alien(self)
-            alien.x = alien_width + 2 * alien_width * alien_number
-            alien.rect.x = alien.x
-            self.aliens.add(alien)
+
+        """Определяет количество рядов, помещающихся на экране."""
+        ship_height = self.ship.rect.height
+        available_space_y = (self.settings.screen_height - (3 * alien_height) - ship_height)
+        number_rows = available_space_y // (2 * alien_height)
+
+        # Создание флота вторжения.
+        for row_number in range(number_rows):
+            for alien_number in range(number_aliens_x):
+                self._create_alien(alien_number, row_number)
+
+    def _create_alien(self, alien_number, row_number):
+        """Создание пришельца и размещение его в ряду."""
+
+        alien = Alien(self)
+        alien_width, alien_height = alien.rect.size
+        alien.x = alien_width + 2 * alien_width * alien_number
+        alien.rect.x = alien.x
+        alien.rect.y = alien.rect.height + 2 * alien.rect.height * row_number
+        self.aliens.add(alien)
+
+    def _check_fleet_edges(self):
+        """Реагирует на достижение пришельцем края экрана."""
+
+        for alien in self.aliens.sprites():
+            if alien.check_edges():
+                self._change_fleet_direction()
+                break
+
+    def _change_fleet_direction(self):
+        """Опускает весь флот и меняет направление флота."""
+
+        for alien in self.aliens.sprites():
+            alien.rect.y += self.settings.fleet_drop_speed
+        self.settings.fleet_direction *= -1
+
 
 
 if __name__ == '__main__':
