@@ -1,9 +1,12 @@
 import sys
 import pygame
+from time import sleep
 from settings import Settings
 from ship import Ship
 from bullet import Bullet
 from alien import Alien
+from game_stats import GameStats
+from button import Button
 
 class AlienInvasion:
     # Класс для управления ресурсами и поведением игры.
@@ -16,24 +19,31 @@ class AlienInvasion:
         pygame.init()
         pygame.display.set_caption("Вторжение пришельцев")
         #ДЛЯ ПОЛНОЭКРАННОГО РЕЖИМА
-        # self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-        # self.settings.screen_width = self.screen.get_rect().width
-        # self.settings.screen_height = self.screen.get_rect().height
+        """self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        self.settings.screen_width = self.screen.get_rect().width
+        self.settings.screen_height = self.screen.get_rect().height"""
         self.ship = Ship(self)
         self.bullets = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
         self._create_fleet()
+
+        # Создание экземпляра для хранения игровой статистики.
+        self.stats = GameStats(self)
+        # Создание кнопки Play.
+        self.play_button = Button(self, "Play")
     def run_game(self):
         # Запуск основного цикла игры.
         while True:
             # Отслеживание событий клавиатуры и мыши.
             self._check_events()
             # при каждом проходе цикла перериcовывается экран
-            self._update_screen()
-            self.ship.update()
-            self._update_aliens()
-            self._update_bullets()
 
+            if self.stats.game_active:
+                print(self.stats.game_active)
+                self.ship.update()
+                self._update_aliens()
+                self._update_bullets()
+            self._update_screen()
             #print(f"Число пуль на экране {len(self.bullets)}")
     def _check_events(self):
         for event in pygame.event.get():
@@ -75,6 +85,9 @@ class AlienInvasion:
         self.aliens.draw(self.screen)
         # Отображение последнего прорисованного экрана
         self.aliens.draw(self.screen)
+        # Кнопка Play отображается в том случае, если игра неактивна.
+        if not self.stats.game_active:
+            self.play_button.draw_button()
         pygame.display.flip()
 
 
@@ -109,6 +122,12 @@ class AlienInvasion:
 
         self._check_fleet_edges()
         self.aliens.update()
+
+        # Проверка коллизий "пришелец — корабль".
+        if pygame.sprite.spritecollideany(self.ship, self.aliens):
+            self._ship_hit()
+        # Проверить, добрались ли пришельцы до нижнего края экрана.
+        self._check_aliens_bottom()
 
     def _create_fleet(self):
         """Создает флот пришельцев."""
@@ -155,6 +174,31 @@ class AlienInvasion:
             alien.rect.y += self.settings.fleet_drop_speed
         self.settings.fleet_direction *= -1
 
+    def _ship_hit(self):
+        """Обрабатывает столкновение корабля с пришельцем."""
+        if self.stats.ships_left > 0:
+            # Уменьшение ships_left.
+            self.stats.ships_left -= 1
+            # Очистка списков пришельцев и снарядов.
+            self.aliens.empty()
+            self.bullets.empty()
+            # Создание нового флота и размещение корабля в центре.
+            self._create_fleet()
+            self.ship.center_ship()
+            # Пауза.
+            sleep(1)
+
+        else:
+            self.stats.game_active = False
+    def _check_aliens_bottom(self):
+        """Проверяет, добрались ли пришельцы до нижнего края экрана."""
+
+        screen_rect = self.screen.get_rect()
+        for alien in self.aliens.sprites():
+            if alien.rect.bottom >= screen_rect.bottom:
+                # Происходит то же, что при столкновении с кораблем.
+                self._ship_hit()
+                break
 
 
 if __name__ == '__main__':
