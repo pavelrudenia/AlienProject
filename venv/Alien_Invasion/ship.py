@@ -5,6 +5,7 @@ class Ship(Sprite):
     """класс для управления кораблем"""
     def __init__(self, ai_game):
         """Инициализирует корабль и задает его начальную позицию."""
+
         super().__init__()
         self.screen = ai_game.screen
         self.settings = ai_game.settings
@@ -15,14 +16,11 @@ class Ship(Sprite):
         self.rect = self.image.get_rect()
         """Каждый новый корабль появляется у нижнего края экрана."""
         self.rect.midbottom = self.screen_rect.midbottom
-
         """флаг перемещения"""
         self.moving_right = False
         self.moving_left = False
-
         """сохранение вещественной координаты корабля"""
         self.x =float(self.rect.x)
-
     def update(self):
         """Обновляет позицию корабля с учетом флагов."""
         # Обновляется атрибут x объекта ship, не rect.
@@ -34,9 +32,7 @@ class Ship(Sprite):
     def blitme(self):
         """Рисует корабль в текущей позиции."""
         self.screen.blit(self.image, self.rect)
-
     def center_ship(self):
         """Размещает корабль в центре нижней стороны."""
-
         self.rect.midbottom = self.screen_rect.midbottom
         self.x = float(self.rect.x)
