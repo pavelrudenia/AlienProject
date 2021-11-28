@@ -37,7 +37,7 @@ class Settings():
         """Инициализирует настройки, изменяющиеся в ходе игры."""
         self.alien_speed = 0.5
         self.bullet_speed = 0.75
-        self.ship_speed = 1.5
+        self.ship_speed = 0.75
         # self.ship_speed_factor = 1.5
         # self.bullet_speed_factor = 3.0
         # self.alien_speed_factor = 1.0
